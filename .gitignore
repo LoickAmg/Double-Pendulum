@@ -1,0 +1,14 @@
+.venv/
+.venv*/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+*.png
+!figures/*.png
+figures/*.gif
+figures/*.mp4
+*.log

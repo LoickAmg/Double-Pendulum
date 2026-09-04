@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "double-pendulum"
+version = "0.1.0"
+description = "Double pendule : intégration numérique, animation, figures statiques et analyse du chaos."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Project roadmap" }]
+dependencies = [
+    "numpy>=2.0",
+    "matplotlib>=3.9",
+    "scipy>=1.14",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "ruff>=0.9"]
+
+[project.scripts]
+double-pendulum = "double_pendulum.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
