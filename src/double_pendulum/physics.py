@@ -37,6 +37,19 @@ class Params:
     l2: float = 1.0
     g: float = 9.81
 
+    def __post_init__(self) -> None:
+        # `l1`/`l2`/`m1`/`m2` nuls ou négatifs ne sont pas juste physiquement
+        # absurdes : ils font passer `det = a*c - b**2` (voir docstring du
+        # module) à zéro ou à un signe incohérent dans `_mass_and_forces`,
+        # ce qui produit une division par zéro (NaN/Inf silencieux) plutôt
+        # qu'une erreur claire à la construction.
+        for name in ("m1", "m2", "l1", "l2"):
+            value = getattr(self, name)
+            if not value > 0:
+                raise ValueError(
+                    f"{name} doit être strictement positif (reçu : {value})"
+                )
+
 
 def from_angular(th1: float, th2: float, w1: float, w2: float, p: Params) -> State:
     """Convertit (angles, vitesses angulaires) en coordonnées canoniques."""
@@ -190,6 +203,14 @@ def integrate(
     """Intègre le double pendule sur `duration` secondes."""
     if integrator not in INTEGRATORS:
         raise ValueError(f"intégrateur inconnu : {integrator!r} (choix: {sorted(INTEGRATORS)})")
+    if not dt > 0:
+        # dt=0 lève ZeroDivisionError sur `duration / dt` ci-dessous ; dt<0
+        # ne le fait pas mais inverse silencieusement le sens du temps et
+        # peut rendre `n` négatif ou nul (np.linspace lève alors une erreur
+        # bien moins parlante que celle-ci).
+        raise ValueError(f"dt doit être strictement positif (reçu : {dt})")
+    if not duration > 0:
+        raise ValueError(f"duration doit être strictement positif (reçu : {duration})")
     step = INTEGRATORS[integrator]
     n = int(round(duration / dt)) + 1
     times = np.linspace(0.0, duration, n)

@@ -79,3 +79,40 @@ def test_single_step_shape_and_finite():
         out = step(0.001, init, p)
         assert out.shape == (4,)
         assert np.all(np.isfinite(out))
+
+
+def test_params_rejects_non_positive_masses_and_lengths():
+    # `l1=0` était le cas cité par l'audit, mais `det = a*c - b**2` (voir
+    # docstring du module) peut aussi tomber à zéro via `m1=0`, `m2=0` ou
+    # `l2=0` — on valide donc les quatre, pas seulement `l1`.
+    for kwargs in (
+        {"m1": 0.0},
+        {"m1": -1.0},
+        {"m2": 0.0},
+        {"m2": -1.0},
+        {"l1": 0.0},
+        {"l1": -1.0},
+        {"l2": 0.0},
+        {"l2": -1.0},
+    ):
+        with pytest.raises(ValueError):
+            Params(**kwargs)
+
+
+def test_params_allows_non_positive_gravity():
+    # g=0 (apesanteur) ou g<0 sont physiquement sensés (pas une source de
+    # division par zéro dans `det`), donc volontairement non rejetés.
+    Params(g=0.0)
+    Params(g=-9.81)
+
+
+def test_integrate_rejects_non_positive_dt_and_duration():
+    init, p = _regular()
+    with pytest.raises(ValueError):
+        integrate(init, p, dt=0.0, duration=1.0)
+    with pytest.raises(ValueError):
+        integrate(init, p, dt=-1e-3, duration=1.0)
+    with pytest.raises(ValueError):
+        integrate(init, p, dt=1e-3, duration=0.0)
+    with pytest.raises(ValueError):
+        integrate(init, p, dt=1e-3, duration=-1.0)

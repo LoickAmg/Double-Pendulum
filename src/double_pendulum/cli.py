@@ -47,6 +47,20 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run(args: argparse.Namespace) -> int:
+    # `Params.__post_init__` (masses/longueurs) et `integrate` (dt/duration)
+    # valident déjà ces paramètres physiques (voir physics.py) et lèvent
+    # `ValueError` — toute la logique de la commande est donc regroupée
+    # dans `_run_inner` et appelée ici sous un seul `try` pour convertir
+    # n'importe laquelle de ces erreurs (y compris celles du chemin
+    # `--chaos`, qui appelle `integrate` avant d'atteindre le `traj = ...`
+    # plus bas) en erreur CLI propre plutôt qu'en trace Python.
+    try:
+        return _run_inner(args)
+    except ValueError as exc:
+        raise SystemExit(f"double-pendulum: paramètre invalide : {exc}") from exc
+
+
+def _run_inner(args: argparse.Namespace) -> int:
     params = Params(m1=args.m1, m2=args.m2, l1=args.l1, l2=args.l2, g=args.g)
     initial = from_angular(
         np.radians(args.angles[0]), np.radians(args.angles[1]), 0.0, 0.0, params
